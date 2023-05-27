@@ -1,10 +1,11 @@
 name: flutter_sound_processing
 description: Flutter package designed for sound processing and analysis.
-version: 0.0.1
-homepage:
+version: 0.0.1-beta
+homepage: https://github.com/tkas9mbek/flutter_sound_processing
+repository: https://github.com/tkas9mbek/flutter_sound_processing
 
 environment:
-  sdk: '>=2.19.0-146.2.beta <3.0.0'
+  sdk: '>=2.19.0 <3.0.0'
   flutter: ">=2.5.0"
 
 dependencies:
