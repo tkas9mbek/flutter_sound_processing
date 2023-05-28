@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import AudioKit
 
 public class SwiftFlutterSoundProcessingPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
