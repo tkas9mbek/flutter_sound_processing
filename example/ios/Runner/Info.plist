@@ -47,5 +47,12 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+    <string>Allow access to the microphone for audio recording.</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>audio</string>
+        <string>processing</string>
+    </array>
 </dict>
 </plist>

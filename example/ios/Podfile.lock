@@ -6,11 +6,17 @@ PODS:
   - flutter_sound_core (9.2.13)
   - flutter_sound_processing (0.0.1):
     - Flutter
+    - RosaKit
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
   - permission_handler_apple (9.0.4):
     - Flutter
+  - PlainPocketFFT (0.0.9)
+  - PocketFFT (0.0.1)
+  - RosaKit (0.0.11):
+    - PlainPocketFFT (~> 0.0.9)
+    - PocketFFT (~> 0.0.1)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
@@ -22,6 +28,9 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - flutter_sound_core
+    - PlainPocketFFT
+    - PocketFFT
+    - RosaKit
 
 EXTERNAL SOURCES:
   Flutter:
@@ -39,10 +48,13 @@ SPEC CHECKSUMS:
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_sound: c60effa2a350fb977885f0db2fbc4c1ad5160900
   flutter_sound_core: 26c10e5832e76aaacfae252d8925232281c486ae
-  flutter_sound_processing: 4ee1cd40be3071c2faf9d464fd1230852fb6b742
+  flutter_sound_processing: 59fa6cba60eb0c97ead9572deb7e4f8c85a8635a
   path_provider_foundation: eaf5b3e458fc0e5fbb9940fb09980e853fe058b8
   permission_handler_apple: 44366e37eaf29454a1e7b1b7d736c2cceaeb17ce
+  PlainPocketFFT: 3763f37fba0737e457ed1a3b9b7bfa70c00ff213
+  PocketFFT: cdbe7ef5b7cd08520655d85d03d701b5ba35fdec
+  RosaKit: 6e28b09f5eb990148a401e0c4b4ff0c207bd6569
 
-PODFILE CHECKSUM: ef19549a9bc3046e7bb7d2fab4d021637c0c58a3
+PODFILE CHECKSUM: cb63e565bfdef3042e7388069c98d69a86f724ff
 
 COCOAPODS: 1.12.1
