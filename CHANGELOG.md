@@ -5,3 +5,7 @@
 ## [0.0.2-beta] - 2023-05-27
 
 - Updated the README with additional instructions, usage examples, and important information.
+
+## [0.1.0] - 2023-06-18
+
+- Added iOS implementation for `getFeatureMatrix` method.

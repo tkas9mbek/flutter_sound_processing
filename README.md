@@ -2,8 +2,6 @@
 
 Flutter library that provides audio processing capabilities, including the calculation of feature matrices from audio signals. It enables Flutter developers to extract meaningful information from audio data, such as Mel-Frequency Cepstral Coefficients (MFCCs) and spectral features.
 
-**Note: iOS support is currently in progress.**
-
 ## Usage
 
 To use this plugin, add `flutter_sound_processing` as a dependency in your `pubspec.yaml` file using command:
