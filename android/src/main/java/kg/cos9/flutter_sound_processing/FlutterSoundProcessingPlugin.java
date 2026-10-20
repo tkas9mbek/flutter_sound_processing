@@ -1,10 +1,12 @@
 package kg.cos9.flutter_sound_processing;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.jlibrosa.audio.JLibrosa;
 
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.MethodCall;
@@ -14,6 +16,12 @@ import io.flutter.plugin.common.MethodChannel.Result;
 
 /** FlutterSoundProcessingPlugin */
 public class FlutterSoundProcessingPlugin implements FlutterPlugin, MethodCallHandler {
+  // Error codes, messages and argument keys mirror ios/Classes/SwiftFlutterSoundProcessingPlugin.swift
+  // and lib/flutter_sound_processing_method_channel.dart — change all three together.
+  private static final String INVALID_ARGUMENTS = "INVALID_ARGUMENTS";
+  private static final String CALCULATION_FAILED = "CALCULATION_FAILED";
+  private static final String[] POSITIVE_INT_KEYS = {"sample_rate", "mfcc", "n_fft", "n_mels", "hop_length"};
+
   private static final JLibrosa jLibrosa = new JLibrosa();
   private MethodChannel channel;
 
@@ -25,16 +33,45 @@ public class FlutterSoundProcessingPlugin implements FlutterPlugin, MethodCallHa
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    if (call.method.equals("getFeatureMatrix")) {
-      result.success(getFeatureMatrix(call.argument("values"),
-              call.argument("sample_rate"),
-              call.argument("mfcc"),
-              call.argument("n_fft"),
-              call.argument("n_mels"),
-              call.argument("hop_length")));
-    } else {
+    if (!call.method.equals("getFeatureMatrix")) {
       result.notImplemented();
+      return;
     }
+
+    if (!(call.arguments instanceof Map)) {
+      result.error(INVALID_ARGUMENTS, "arguments: expected a map", null);
+      return;
+    }
+
+    final String invalidArgument = invalidArgument((Map<?, ?>) call.arguments);
+
+    if (invalidArgument != null) {
+      result.error(INVALID_ARGUMENTS, invalidArgument, null);
+      return;
+    }
+
+    final List<?> values = call.argument("values");
+    final int sampleRate = call.argument("sample_rate");
+    final int mfcc = call.argument("mfcc");
+    final int nFFT = call.argument("n_fft");
+    final int nMels = call.argument("n_mels");
+    final int hopLength = call.argument("hop_length");
+
+    final float[][] mfccValues;
+
+    try {
+      mfccValues = jLibrosa.generateMFCCFeatures(toFloatArray(values), sampleRate, mfcc, nFFT, nMels, hopLength);
+    } catch (RuntimeException e) {
+      result.error(CALCULATION_FAILED, String.valueOf(e.getMessage()), null);
+      return;
+    }
+
+    if (mfccValues == null || mfccValues.length == 0 || mfccValues[0].length == 0) {
+      result.error(CALCULATION_FAILED, "empty result", null);
+      return;
+    }
+
+    result.success(flatten(mfccValues));
   }
 
   @Override
@@ -42,33 +79,52 @@ public class FlutterSoundProcessingPlugin implements FlutterPlugin, MethodCallHa
     channel.setMethodCallHandler(null);
   }
 
-  private double[] getFeatureMatrix(ArrayList<Double> values,
-                                    int mSampleRate,
-                                    int nMFCC,
-                                    int n_fft,
-                                    int n_mels,
-                                    int hop_length) {
-    float[] magValues = new float[values.size()];
+  /** Returns why the arguments are invalid, or null if they are valid. */
+  @Nullable
+  private static String invalidArgument(Map<?, ?> arguments) {
+    final Object values = arguments.get("values");
 
-    for (int i = 0; i < values.size(); i++) {
-      magValues[i] = values.get(i).floatValue();
+    if (!(values instanceof List) || ((List<?>) values).isEmpty()) {
+      return "values: expected a non-empty list of doubles";
     }
 
-    float[][] floatMatrix = jLibrosa.generateMFCCFeatures(magValues,
-            mSampleRate,
-            nMFCC,
-            n_fft,
-            n_mels,
-            hop_length);
+    for (Object value : (List<?>) values) {
+      if (!(value instanceof Number)) {
+        return "values: expected a non-empty list of doubles";
+      }
+    }
 
-    int matrixLength = floatMatrix.length;
-    int matrixWidth = floatMatrix[0].length;
+    for (String key : POSITIVE_INT_KEYS) {
+      final Object value = arguments.get(key);
 
-    double[] framePredDaArray = new double[matrixWidth * matrixLength];
+      if (!(value instanceof Integer) || (Integer) value <= 0) {
+        return key + ": expected a positive integer";
+      }
+    }
+
+    return null;
+  }
+
+  private static float[] toFloatArray(List<?> values) {
+    final float[] floats = new float[values.size()];
+
+    for (int i = 0; i < values.size(); i++) {
+      floats[i] = ((Number) values.get(i)).floatValue();
+    }
+
+    return floats;
+  }
+
+  // Flattened column-major (data[row + rows * col]) so Android and iOS return the same layout.
+  private static double[] flatten(float[][] matrix) {
+    final int matrixLength = matrix.length;
+    final int matrixWidth = matrix[0].length;
+
+    final double[] framePredDaArray = new double[matrixWidth * matrixLength];
 
     for (int i = 0; i < matrixLength; i++) {
       for (int j = 0; j < matrixWidth; j++) {
-        framePredDaArray[i + matrixLength * j] = floatMatrix[i][j];
+        framePredDaArray[i + matrixLength * j] = matrix[i][j];
       }
     }
 

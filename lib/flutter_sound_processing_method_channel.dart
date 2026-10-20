@@ -19,6 +19,8 @@ class MethodChannelFlutterSoundProcessing
     required int fftSize,
     required int mfcc,
   }) async {
+    // Method name and keys mirror android/.../FlutterSoundProcessingPlugin.java and
+    // ios/Classes/SwiftFlutterSoundProcessingPlugin.swift; a native PlatformException propagates unchanged.
     final arguments = <String, dynamic>{
       'values': signals,
       'sample_rate': sampleRate,
