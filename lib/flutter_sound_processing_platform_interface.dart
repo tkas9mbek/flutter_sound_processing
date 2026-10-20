@@ -10,7 +10,8 @@ abstract class FlutterSoundProcessingPlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static FlutterSoundProcessingPlatform _instance = MethodChannelFlutterSoundProcessing();
+  static FlutterSoundProcessingPlatform _instance =
+      MethodChannelFlutterSoundProcessing();
 
   /// The default instance of [FlutterSoundProcessingPlatform] to use.
   ///
