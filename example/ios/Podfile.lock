@@ -4,7 +4,7 @@ PODS:
     - Flutter
     - flutter_sound_core (= 9.30.0)
   - flutter_sound_core (9.30.0)
-  - flutter_sound_processing (0.0.1):
+  - flutter_sound_processing (1.0.0):
     - Flutter
     - RosaKit (~> 0.0.11)
   - PlainPocketFFT (0.0.9)
@@ -37,7 +37,7 @@ SPEC CHECKSUMS:
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
   flutter_sound: d95194f6476c9ad211d22b3a414d852c12c7ca44
   flutter_sound_core: 7f2626d249d3a57bfa6da892ef7e22d234482c1a
-  flutter_sound_processing: 51aa361e881ccc8812c16a3f5c2fc0fb416c9506
+  flutter_sound_processing: 8c80843f3b776afc59f02a22d388e316ac0268a3
   PlainPocketFFT: 3763f37fba0737e457ed1a3b9b7bfa70c00ff213
   PocketFFT: cdbe7ef5b7cd08520655d85d03d701b5ba35fdec
   RosaKit: 6e28b09f5eb990148a401e0c4b4ff0c207bd6569

@@ -1,5 +1,5 @@
 group = 'kg.cos9.flutter_sound_processing'
-version = '1.0'
+version = '1.0.0'
 
 buildscript {
     repositories {

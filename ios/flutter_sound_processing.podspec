@@ -4,14 +4,15 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_sound_processing'
-  s.version          = '0.0.1'
-  s.summary          = 'Flutter package designed for sound processing and analysis.'
+  s.version          = '1.0.0'
+  s.summary          = 'Calculate MFCCs natively from samples, 16-bit PCM or audio files.'
   s.description      = <<-DESC
-Flutter package designed for sound processing and analysis.
+Flutter plugin that calculates MFCCs natively on Android and iOS from samples,
+16-bit PCM or audio files (mp3, wav, m4a, flac).
                        DESC
-  s.homepage         = 'http://example.com'
+  s.homepage         = 'https://github.com/tkas9mbek/flutter_sound_processing'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Your Company' => 'email@example.com' }
+  s.author           = 'Kasymbek Tashbaev'
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
