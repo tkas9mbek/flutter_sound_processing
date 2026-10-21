@@ -1,17 +1,12 @@
 PODS:
   - Flutter (1.0.0)
-  - flutter_sound (9.2.13):
+  - flutter_sound (9.30.0):
     - Flutter
-    - flutter_sound_core (= 9.2.13)
-  - flutter_sound_core (9.2.13)
-  - flutter_sound_processing (0.0.1):
+    - flutter_sound_core (= 9.30.0)
+  - flutter_sound_core (9.30.0)
+  - flutter_sound_processing (1.0.0):
     - Flutter
-    - RosaKit
-  - path_provider_foundation (0.0.1):
-    - Flutter
-    - FlutterMacOS
-  - permission_handler_apple (9.0.4):
-    - Flutter
+    - RosaKit (~> 0.0.11)
   - PlainPocketFFT (0.0.9)
   - PocketFFT (0.0.1)
   - RosaKit (0.0.11):
@@ -22,8 +17,6 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_sound (from `.symlinks/plugins/flutter_sound/ios`)
   - flutter_sound_processing (from `.symlinks/plugins/flutter_sound_processing/ios`)
-  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/ios`)
-  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
 
 SPEC REPOS:
   trunk:
@@ -39,22 +32,16 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_sound/ios"
   flutter_sound_processing:
     :path: ".symlinks/plugins/flutter_sound_processing/ios"
-  path_provider_foundation:
-    :path: ".symlinks/plugins/path_provider_foundation/ios"
-  permission_handler_apple:
-    :path: ".symlinks/plugins/permission_handler_apple/ios"
 
 SPEC CHECKSUMS:
-  Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
-  flutter_sound: c60effa2a350fb977885f0db2fbc4c1ad5160900
-  flutter_sound_core: 26c10e5832e76aaacfae252d8925232281c486ae
-  flutter_sound_processing: 59fa6cba60eb0c97ead9572deb7e4f8c85a8635a
-  path_provider_foundation: eaf5b3e458fc0e5fbb9940fb09980e853fe058b8
-  permission_handler_apple: 44366e37eaf29454a1e7b1b7d736c2cceaeb17ce
+  Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
+  flutter_sound: d95194f6476c9ad211d22b3a414d852c12c7ca44
+  flutter_sound_core: 7f2626d249d3a57bfa6da892ef7e22d234482c1a
+  flutter_sound_processing: 8c80843f3b776afc59f02a22d388e316ac0268a3
   PlainPocketFFT: 3763f37fba0737e457ed1a3b9b7bfa70c00ff213
   PocketFFT: cdbe7ef5b7cd08520655d85d03d701b5ba35fdec
   RosaKit: 6e28b09f5eb990148a401e0c4b4ff0c207bd6569
 
-PODFILE CHECKSUM: cb63e565bfdef3042e7388069c98d69a86f724ff
+PODFILE CHECKSUM: 4a4fe981d4f0db51f558ca4576236535a3059e28
 
-COCOAPODS: 1.12.1
+COCOAPODS: 1.16.2

@@ -1,0 +1,35 @@
+# pub uses this file instead of .gitignore, so the .gitignore patterns are repeated here.
+
+# Contributor tooling and docs: not part of the package
+AGENTS.md
+CLAUDE.md
+docs/
+.claude/
+.fvm/
+.fvmrc
+work/
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IDE
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Dart / Flutter
+/pubspec.lock
+**/doc/api/
+.dart_tool/
+.packages
+build/
