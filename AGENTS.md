@@ -10,7 +10,7 @@
 
 ## Project Overview
 
-`flutter_sound_processing` — Flutter **plugin** (Dart API + Android Java + iOS Swift) that **calculates MFCCs** (mel-frequency cepstral coefficients) from raw audio samples natively. Published on pub.dev. Dart calls reach native code through one `MethodChannel`; the native side wraps `jlibrosa` (Android) and `RosaKit` (iOS). 1.0.0 renames the entry point `getFeatureMatrix` → `calculateMFCCs` (breaking, see plugin-context).
+`flutter_sound_processing` — Flutter **plugin** (Dart API + Android Java + iOS Swift) that **calculates MFCCs** (mel-frequency cepstral coefficients) natively from `double` samples, 16-bit PCM or an audio file (decoded natively). Published on pub.dev. Dart calls reach native code through one `MethodChannel`; the native side wraps `jlibrosa` (Android) and `RosaKit` (iOS) and decodes files with `MediaExtractor`/`MediaCodec` and `AVAudioFile`. Public API: `calculateMFCCs`, `calculateMFCCsFromPcm16`, `calculateMFCCsFromFile` (1.0.0 renamed `getFeatureMatrix`, see plugin-context).
 
 ```
 FlutterSoundProcessing  →  FlutterSoundProcessingPlatform  →  MethodChannelFlutterSoundProcessing  →  native plugin

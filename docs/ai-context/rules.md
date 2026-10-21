@@ -17,7 +17,7 @@ Style rules `S1`–`S6` are in the [AGENTS.md](../../AGENTS.md) Code Style table
 | Class / File / Const | `PascalCase` / `snake_case` / `lowerCamelCase` | `FlutterSoundProcessing` / `flutter_sound_processing.dart` / `defaultHopLength` |
 | Platform interface | `<Plugin>Platform` | `FlutterSoundProcessingPlatform` |
 | Channel implementation | `MethodChannel<Plugin>` | `MethodChannelFlutterSoundProcessing` |
-| Public method | verb + noun, mirrors the native method name | `getFeatureMatrix` |
+| Public method | verb + noun, mirrors the native method name | `calculateMFCCs`, `calculateMFCCsFromFile` |
 | Channel argument key | `snake_case` | `sample_rate`, `n_fft` |
 | Test file | `<source_file>_test.dart` in `test/` | `flutter_sound_processing_method_channel_test.dart` |
 

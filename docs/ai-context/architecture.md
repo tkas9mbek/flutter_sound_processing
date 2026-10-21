@@ -9,6 +9,7 @@ FlutterSoundProcessing                   lib/flutter_sound_processing.dart      
   → FlutterSoundProcessingPlatform       lib/flutter_sound_processing_platform_interface.dart   abstract + token-verified instance (P2)
     → MethodChannelFlutterSoundProcessing lib/flutter_sound_processing_method_channel.dart      builds the argument map, calls the channel
       → native plugin                     android/…/FlutterSoundProcessingPlugin.java, ios/Classes/SwiftFlutterSoundProcessingPlugin.swift
+                                          (+ AudioFileDecoder, Resampler — one mirrored file each per platform)
 ```
 
 | Layer | Owns | Never |
@@ -25,11 +26,14 @@ Three places must agree — change them in one commit:
 | Item | Dart | Android | iOS |
 |---|---|---|---|
 | Channel name | `MethodChannel('flutter_sound_processing')` | `MethodChannel(…, "flutter_sound_processing")` | `FlutterMethodChannel(name: "flutter_sound_processing")` |
-| Method name | `'getFeatureMatrix'` | `call.method.equals(…)` | `call.method == …` |
-| Argument keys | map literal in the method channel | `call.argument("…")` | `arguments["…"]` |
+| Method names | `'calculateMFCCs'` (used by both `calculateMFCCs` and `calculateMFCCsFromPcm16`), `'calculateMFCCsFromFile'` | `switch (call.method)` | `call.method == …` |
+| Keys, `calculateMFCCs` | `values: Float64List` + `sample_rate`, `mfcc`, `n_fft`, `n_mels`, `hop_length` (ints) | `double[]` + 5 `Integer` | `FlutterStandardTypedData` (`.float64`) + 5 `Int` |
+| Keys, `calculateMFCCsFromFile` | `path: String` + the same 5 ints | `String` + 5 `Integer` | `String` + 5 `Int` |
 | Result | `Float64List?` | `double[]` | `FlutterStandardTypedData(float64:)` |
+| Error codes | passthrough | `INVALID_ARGUMENTS`, `FILE_NOT_FOUND`, `FILE_TOO_LONG`, `UNSUPPORTED_FORMAT`, `DECODE_FAILED`, `CALCULATION_FAILED` | same strings and messages |
+| Threading | — | validate on the platform thread, work on one `ExecutorService`, `result.*` posted to the main `Handler` | validate on main, work on one serial `DispatchQueue`, `result(…)` on `DispatchQueue.main` |
 
-The method name shown is the 0.1.0 one; 1.0.0 renames it to `calculateMFCCs` (see [plugin-context](../project/plugin-context.md)). Keys are `snake_case` strings; Dart parameter names are `lowerCamelCase` (`fftSize` → `'n_fft'`). Add a comment on both sides naming the counterpart file (`rules.md`).
+Three Dart methods map to two native methods: `calculateMFCCsFromPcm16` divides by 32768 in Dart and reuses `'calculateMFCCs'`. Keys are `snake_case` strings; Dart parameter names are `lowerCamelCase` (`fftSize` → `'n_fft'`). Add a comment on both sides naming the counterpart file (`rules.md`).
 
 ## Adding a method
 
