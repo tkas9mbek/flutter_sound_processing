@@ -30,10 +30,16 @@ A channel-contract change (Dart + Android + iOS) is one commit — splitting it 
 
 ```
 release/1.0.0      feature/PROJ-12_mel-spectrogram      fix/ios-empty-signal-crash
-feat(api): Add getMelSpectrogram
-fix(android): Return null for empty signals
+feat(api): Add calculateMFCCsFromFile and calculateMFCCsFromPcm16
+fix(ios): Compute MFCC in the plugin instead of RosaKit mfcc
+chore(example): Add audio fixtures and file checks
+docs: Document file and PCM16 input
 release: Bump version to 1.0.0
 ```
+
+## Never commit
+
+`work/` (plans, analysis, review reports) and `.claude/` are git-ignored scratch; `pubspec.lock`, `build/`, `Pods/`, `.dart_tool/` likewise. Don't force-add them, and don't link to `work/` from committed docs.
 
 ## Tags
 

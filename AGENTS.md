@@ -10,7 +10,7 @@
 
 ## Project Overview
 
-`flutter_sound_processing` — Flutter **plugin** (Dart API + Android Java + iOS Swift) that **calculates MFCCs** (mel-frequency cepstral coefficients) natively from `double` samples, 16-bit PCM or an audio file (decoded natively). Published on pub.dev. Dart calls reach native code through one `MethodChannel`; the native side wraps `jlibrosa` (Android) and `RosaKit` (iOS) and decodes files with `MediaExtractor`/`MediaCodec` and `AVAudioFile`. Public API: `calculateMFCCs`, `calculateMFCCsFromPcm16`, `calculateMFCCsFromFile` (1.0.0 renamed `getFeatureMatrix`, see plugin-context).
+`flutter_sound_processing` — Flutter **plugin** (Dart API + Android Java + iOS Swift) that **calculates MFCCs** (mel-frequency cepstral coefficients) natively from `double` samples, 16-bit PCM or an audio file (decoded natively). Published on pub.dev. Dart calls reach native code through one `MethodChannel`. Android wraps `jlibrosa`; iOS computes the MFCCs in the plugin (`ios/Classes/MfccCalculator.swift`, a term-by-term mirror of jlibrosa's pipeline) and uses `RosaKit` only for the mel filterbank. Files are decoded with `MediaExtractor`/`MediaCodec` (Android) and `AVAudioFile` (iOS). Public API: `calculateMFCCs`, `calculateMFCCsFromPcm16`, `calculateMFCCsFromFile` (`getFeatureMatrix` was renamed to `calculateMFCCs` in 1.0.0).
 
 ```
 FlutterSoundProcessing  →  FlutterSoundProcessingPlatform  →  MethodChannelFlutterSoundProcessing  →  native plugin
@@ -45,7 +45,7 @@ Native code only runs on a device/simulator — `flutter test` cannot reach it. 
 | P3 | Channel name, method names and argument keys are a contract with native code — change Dart, Android and iOS in the same commit. |
 | P4 | Android and iOS must return the same shape and the same numeric result for the same input. |
 | P5 | Public API additions/changes are reflected in `README.md`, the dartdoc, `CHANGELOG.md` and the `example/` app. |
-| P6 | Native platform errors surface as `PlatformException` (or `null` where the documented API says so) — never swallowed silently. |
+| P6 | Native platform errors surface as `PlatformException` with the documented code — never swallowed silently, never returned as `null`. |
 
 Layout: `lib/` (Dart API) · `android/src/main/java/kg/cos9/flutter_sound_processing/` · `ios/Classes/` (+ `.podspec`) · `example/` (manual test bench) · `test/` (Dart unit tests).
 
@@ -73,7 +73,7 @@ Layout: `lib/` (Dart API) · `android/src/main/java/kg/cos9/flutter_sound_proces
 | S5 | No `print` — surface problems through exceptions. |
 | S6 | File name == class name (`snake_case`); no `Impl`/`Helper`/`Manager`/`Util` suffixes. |
 
-Native code: keep each platform file small and mirrored — same method names, same argument keys, same error codes. Follow each platform's idiom (Java camelCase, Swift API guidelines).
+Native code: keep each platform file small and mirrored — same method names, same argument keys, same error codes and messages; `AudioFileDecoder` and `Resampler` exist once per platform with the same name. The one exception is `ios/Classes/MfccCalculator.swift`, which mirrors jlibrosa's `AudioFeatureExtraction` (Android's library) rather than a plugin file. Follow each platform's idiom (Java camelCase, Swift API guidelines).
 
 ---
 
@@ -102,6 +102,7 @@ Commits: `type: Capitalized imperative` (or `TICKET-ID: …`) — ≤72 chars, n
 3. Keep Dart, Android and iOS in sync (`P3`, `P4`) — a one-platform change is incomplete unless the task says otherwise.
 4. Sort `pubspec.yaml` deps: SDK first, then alphabetical.
 5. Don't raise `environment` constraints, native dependency versions or `minSdk`/iOS deployment target without a plan that says so — they are breaking for consumers.
+6. `work/` (plans, analysis, review reports) and `.claude/` are git-ignored scratch — never commit them and never link to them from committed docs.
 
 ---
 
@@ -116,3 +117,4 @@ Commits: `type: Capitalized imperative` (or `TICKET-ID: …`) — ≤72 chars, n
 | [docs/ai-context/git.md](docs/ai-context/git.md) | Branch / commit / PR format |
 | [docs/ai-context/release.md](docs/ai-context/release.md) | Versioning, changelog, pub.dev publish |
 | [docs/project/plugin-context.md](docs/project/plugin-context.md) | This plugin's API, native deps, known state |
+| [README.md](README.md) · [CHANGELOG.md](CHANGELOG.md) · [example/README.md](example/README.md) | The pub.dev-facing docs (`P5`); `AGENTS.md`, `CLAUDE.md` and `docs/` are excluded from the package by `.pubignore` |

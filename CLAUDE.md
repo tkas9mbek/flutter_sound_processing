@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-> Claude-Code-specific guidance. Project rules, structure, style and commands live in [`AGENTS.md`](./AGENTS.md) — read it first; it applies unchanged. `.claude/` is git-ignored personal tooling.
+> Claude-Code-specific guidance. Project rules, structure, style and commands live in [`AGENTS.md`](./AGENTS.md) — read it first; it applies unchanged. `.claude/` is git-ignored personal tooling: the agents and commands below exist only in the local checkout, not in the repository, and `work/` (their output) is git-ignored too.
 
 ## Subagents (`.claude/agents/`)
 

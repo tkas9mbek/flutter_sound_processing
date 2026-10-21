@@ -1,6 +1,6 @@
 # Code Review — AI Context
 
-Concise checklist. Report format: `work/review.md`.
+Concise checklist. Report format: `work/review.md` (git-ignored scratch; never link to it from committed docs).
 
 ## Severity
 
@@ -30,11 +30,11 @@ Rules tagged `[lint]` are auto-enforced — skip in manual review.
 |---|---|---|
 | PLAT-1 | 🔴 | Channel name, method name and argument keys identical in Dart, Android, iOS (`P3`) |
 | PLAT-2 | 🔴 | Android and iOS return the same shape and layout (`P4`) |
-| PLAT-3 | 🔴 | Invalid/empty input yields the documented result on both platforms, not a native crash (`P6`) |
+| PLAT-3 | 🔴 | Invalid/empty input yields the documented `PlatformException` code on both platforms, not a native crash or `null` (`P6`) |
 | PLAT-4 | 🔴 | No change to `minSdk`, iOS deployment target, Dart/Flutter constraint or native library versions without an explicit plan and CHANGELOG note |
 | PLAT-5 | 🟡 | Heavy computation does not block the platform main thread |
 | PLAT-6 | 🟡 | `pubspec.yaml` plugin block matches native class names |
-| PLAT-7 | 🟢 | Native files mirror each other's structure and naming |
+| PLAT-7 | 🟢 | Native files mirror each other's structure and naming (`ios/Classes/MfccCalculator.swift` mirrors jlibrosa instead; its Java line references stay accurate) |
 
 ## TEST
 
@@ -52,7 +52,7 @@ Rules tagged `[lint]` are auto-enforced — skip in manual review.
 | DOC-1 | 🔴 | Public members have dartdoc (`S4`) |
 | DOC-2 | 🟡 | README usage + API reference updated (`P5`) |
 | DOC-3 | 🟡 | CHANGELOG entry present for user-visible change |
-| DOC-4 | 🟢 | `example/` demonstrates the new/changed API |
+| DOC-4 | 🟢 | `example/` demonstrates the new/changed API; `example/README.md` lists the button |
 
 ## REL (release)
 
