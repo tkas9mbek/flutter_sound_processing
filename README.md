@@ -1,18 +1,26 @@
 # flutter_sound_processing
 
-Flutter plugin that calculates MFCCs (mel-frequency cepstral coefficients) natively on Android and iOS — from `double` samples, from 16-bit PCM integers, or from an audio file (mp3, wav, m4a/AAC, flac) that it decodes, downmixes and resamples natively. It does not record or play audio; use it, for example, to feed a speech or audio ML model.
+Calculates MFCCs (mel-frequency cepstral coefficients) natively on Android and iOS. Give it `double` samples, 16-bit PCM, or an audio file (mp3, wav, m4a/AAC, flac) that it decodes, downmixes and resamples natively; get back the MFCC matrix as one flat `Float64List`. Use it to prepare on-device input for a speech or audio ML model. It does not record or play audio.
+
+Android and iOS return the same values for the same input. Android uses [jlibrosa](https://github.com/Subtitle-Synchronizer/jlibrosa); iOS runs a term-by-term mirror of jlibrosa's pipeline inside the plugin and uses [RosaKit](https://github.com/dhrebeniuk/RosaKit) only for the mel filterbank.
 
 ## Installation
 
-`flutter pub add flutter_sound_processing`
+```
+flutter pub add flutter_sound_processing
+```
 
-| Platform | Requirements | Native library |
+| Platform | Requirements | Native dependency |
 |---|---|---|
 | Dart / Flutter | Dart 3.9 or newer, Flutter 3.35 or newer | — |
-| Android | `minSdk` 24 or higher, `compileSdk` 36 or higher, JDK 17 or newer, an Android Gradle Plugin supported by your Flutter release (the plugin declares AGP 9.1.0, the Flutter 3.47 template value) | jlibrosa 1.1.8 (Maven Central) |
-| iOS | iOS 15.0 or higher, Swift 5 | [RosaKit](https://github.com/dhrebeniuk/RosaKit) `~> 0.0.11` (CocoaPods) |
+| Android | `minSdk` 24+, `compileSdk` 36+, JDK 17+, an Android Gradle Plugin supported by your Flutter release (the plugin declares AGP 9.1.0, the Flutter 3.47 template value) | jlibrosa 1.1.8 (Maven Central) |
+| iOS | iOS 15.0+, Swift 5, CocoaPods | RosaKit `~> 0.0.11` |
 
-## Usage
+The plugin declares no permissions. Reading shared storage (for example `READ_MEDIA_AUDIO` on Android) is the app's responsibility.
+
+## Quick start
+
+All three methods take the same five tuning parameters; only the input differs.
 
 ```dart
 import 'dart:typed_data';
@@ -22,70 +30,77 @@ import 'package:flutter_sound_processing/flutter_sound_processing.dart';
 
 final processing = FlutterSoundProcessing();
 
-try {
-  // Mono samples as doubles, nominally in [-1, 1].
-  final fromDoubles = await processing.calculateMFCCs(
-    signals: samples,
-    sampleRate: 16000,
-    hopLength: 350,
-    nMels: 40,
-    fftSize: 512,
-    mfcc: 40,
-  );
+// Mono samples as doubles, nominally in [-1, 1].
+Future<Float64List?> fromDoubles(List<double> samples) =>
+    processing.calculateMFCCs(
+      signals: samples,
+      sampleRate: 16000,
+      hopLength: 350,
+      nMels: 40,
+      fftSize: 512,
+      mfcc: 40,
+    );
 
-  // 16-bit mono PCM; a List<int> becomes Int16List.fromList(list).
-  final fromPcm16 = await processing.calculateMFCCsFromPcm16(
-    samples: Int16List.fromList(pcmInts),
-    sampleRate: 16000,
-    hopLength: 350,
-    nMels: 40,
-    fftSize: 512,
-    mfcc: 40,
-  );
+// 16-bit mono PCM. A List<int> becomes Int16List.fromList(list).
+Future<Float64List?> fromPcm16(Int16List samples) =>
+    processing.calculateMFCCsFromPcm16(
+      samples: samples,
+      sampleRate: 16000,
+      hopLength: 350,
+      nMels: 40,
+      fftSize: 512,
+      mfcc: 40,
+    );
 
-  // An audio file the app already holds; resampled to sampleRate.
-  final fromFile = await processing.calculateMFCCsFromFile(
-    path: '/absolute/path/to/speech.mp3',
-    sampleRate: 16000,
-    hopLength: 350,
-    nMels: 40,
-    fftSize: 512,
-    mfcc: 40,
-  );
+// An audio file the app can read; decoded natively and resampled to sampleRate.
+Future<Float64List?> fromFile(String path) =>
+    processing.calculateMFCCsFromFile(
+      path: path,
+      sampleRate: 16000,
+      hopLength: 350,
+      nMels: 40,
+      fftSize: 512,
+      mfcc: 40,
+    );
 
-  // Flattened column-major: data[row + rows * col], rows = mfcc.
-  final frames = fromFile!.length ~/ 40;
-} on PlatformException catch (e) {
-  // e.code is one of the codes in Errors.
+Future<void> readResult() async {
+  try {
+    final data = (await fromFile('/absolute/path/to/speech.mp3'))!;
+    final frames = data.length ~/ 40; // rows = mfcc, columns = frames
+    final c0f5 = data[0 + 40 * 5]; // coefficient 0 of frame 5: data[row + rows * col]
+  } on PlatformException catch (e) {
+    // e.code is one of the codes in the Errors table.
+  }
 }
 ```
 
-## API Reference
+## API reference
 
-All three methods return a `Future<Float64List?>` with the native MFCC matrix flattened column-major (`data[row + rows * col]`), with `rows = mfcc` and `frames = result.length ~/ mfcc`, the same layout on Android and iOS. Errors are thrown as `PlatformException`, never returned as `null` (see [Errors](#errors)). Decoding and calculation run off the platform main thread; calls are processed one at a time.
+Every method returns `Future<Float64List?>`: the MFCC matrix flattened column-major, `data[row + rows * col]`, with `rows = mfcc` and `frames = data.length ~/ mfcc`. The layout and the values are the same on Android and iOS. Failures complete the future with a `PlatformException` (see [Errors](#errors)); `null` is never returned. Decoding and calculation run off the platform main thread, one call at a time.
 
-Shared parameters (all required, all positive):
+Shared parameters (all required `int`, all positive):
 
-* `sampleRate`: sample rate in Hz — of the samples for `calculateMFCCs` / `calculateMFCCsFromPcm16`, the **target** rate for `calculateMFCCsFromFile`.
-* `hopLength`: number of samples between successive frames.
-* `nMels`: number of mel filters.
-* `fftSize`: FFT window size in samples. Validated (must be positive) but **currently has no effect on either platform**; both use a fixed 2048, see [Known limitation](#known-limitation-fftsize-is-ignored).
-* `mfcc`: number of MFCC coefficients to calculate.
+| Parameter | Meaning |
+|---|---|
+| `sampleRate` | Sample rate in Hz. The rate of the samples for `calculateMFCCs` and `calculateMFCCsFromPcm16`; the **target** rate for `calculateMFCCsFromFile`. |
+| `hopLength` | Samples between successive frames. |
+| `nMels` | Number of mel filters. |
+| `fftSize` | FFT window size in samples. Validated but currently **ignored**: both platforms use 2048 (see [Known limitations](#known-limitations)). |
+| `mfcc` | Number of coefficients (rows). May be larger than `nMels`. |
 
-### `calculateMFCCs`
+### `calculateMFCCs({required List<double> signals, ...})`
 
-* `signals`: raw mono audio samples (`List<double>`), nominally in `[-1, 1]`; must not be empty. A `Float64List` is sent without copying.
+`signals`: raw mono samples, nominally in `[-1, 1]`; must not be empty. A `Float64List` is sent to native code without copying. Samples are rounded to 32-bit float natively (jlibrosa works in `float`; iOS mirrors it).
 
-### `calculateMFCCsFromPcm16`
+### `calculateMFCCsFromPcm16({required Int16List samples, ...})`
 
-* `samples`: 16-bit mono PCM (`Int16List`); must not be empty. Each sample is divided by 32768 (range `[-1, 1)`), so the result equals `calculateMFCCs` on the normalised values. Pass a `List<int>` as `Int16List.fromList(list)`.
+`samples`: 16-bit mono PCM; must not be empty. Each sample is divided by 32768 (range `[-1, 1)`), so the result equals `calculateMFCCs` on the normalised values.
 
-### `calculateMFCCsFromFile`
+### `calculateMFCCsFromFile({required String path, ...})`
 
-* `path`: absolute filesystem path or `file://` URL of the audio file. The format is detected from the content, not the extension. `content://` URIs are rejected with `INVALID_ARGUMENTS` — copy the file into app storage (for example `getTemporaryDirectory()` from `path_provider`) first. On iOS, files from a document picker are security-scoped: call `startAccessingSecurityScopedResource()` or copy the file first, otherwise the call fails with `FILE_NOT_FOUND`.
-* The audio is downmixed to mono (channel average), normalised to `[-1, 1)` and, when the file's rate differs from `sampleRate`, resampled natively with the same windowed-sinc resampler on both platforms (adequate for MFCCs, not a hi-fi resampler).
-* Files longer than 600 seconds are rejected with `FILE_TOO_LONG` before decoding (Android also stops decoding at 600 s when the file has no duration metadata). Memory use grows with the duration, most on iOS.
-* The plugin declares no storage permission; reading shared storage (`READ_MEDIA_AUDIO` on Android) is the app's responsibility.
+* `path`: absolute filesystem path or `file://` URL. The format is detected from the content, not the extension. `content://` URIs are rejected with `INVALID_ARGUMENTS`: copy the file into app storage first (for example `getTemporaryDirectory()` from `path_provider`). On iOS, files from a document picker are security-scoped; call `startAccessingSecurityScopedResource()` or copy the file first, otherwise the call fails with `FILE_NOT_FOUND`.
+* The audio is downmixed to mono (channel average), normalised to `[-1, 1)` and, when the file's rate differs from `sampleRate`, resampled natively. Both platforms use the same windowed-sinc resampler; it is adequate for MFCCs, not a hi-fi resampler.
+* Files longer than 600 seconds are rejected with `FILE_TOO_LONG` before decoding. Memory use grows with the duration.
 
 #### Supported formats
 
@@ -97,31 +112,35 @@ Shared parameters (all required, all positive):
 | `.flac` | FLAC | Android + iOS |
 | `.ogg`, `.aiff`, ALAC, 24-bit wav, … | — | not guaranteed; may work on one platform only (`UNSUPPORTED_FORMAT` / `DECODE_FAILED` otherwise) |
 
-Lossy formats (mp3, AAC) can decode to slightly different lengths on Android and iOS because the platform decoders handle encoder delay and padding differently, so the frame count may differ by a few frames.
+## Errors
 
-### Errors
-
-Failures complete the future with a `PlatformException`; the codes are the same on Android and iOS, and so are the messages except for `CALCULATION_FAILED`. `message` starts with the offending argument. For `calculateMFCCsFromFile` the checks run in the order of the table; arguments are validated before the file is touched.
+The codes are the same on Android and iOS, and so are the messages except for `CALCULATION_FAILED`. `message` starts with the offending argument; `details` carries the platform's own description where there is one. For `calculateMFCCsFromFile` the checks run in the order of the table, and arguments are validated before the file is touched.
 
 | Code | When |
 |---|---|
 | `INVALID_ARGUMENTS` | `signals` / `samples` is empty, `path` is empty or a `content://` URI, an argument is missing or has the wrong type, or `sampleRate`, `hopLength`, `nMels`, `fftSize` or `mfcc` is not positive. |
 | `FILE_NOT_FOUND` | `path` does not exist, is a directory or is not readable. |
-| `UNSUPPORTED_FORMAT` | The file cannot be opened as audio, has no audio track, or the platform has no decoder for it. `details` carries the platform's description. |
-| `FILE_TOO_LONG` | The file is longer than 600 seconds (checked from the file's metadata before decoding). |
-| `DECODE_FAILED` | The decoder failed after opening the file, produced an unsupported PCM encoding, or decoded no samples. A corrupt file fails with either `UNSUPPORTED_FORMAT` or `DECODE_FAILED`, depending on the platform. |
-| `CALCULATION_FAILED` | The native MFCC calculation failed for valid arguments (for example a signal shorter than 1025 samples) or returned an empty matrix. `message` carries the reason; it differs between platforms (Android passes on jlibrosa's exception message). |
+| `UNSUPPORTED_FORMAT` | The file cannot be opened as audio, has no audio track, or the platform has no decoder for it. |
+| `FILE_TOO_LONG` | The file is longer than 600 seconds (from the file's metadata, before decoding; Android also stops a file without duration metadata at 600 s). |
+| `DECODE_FAILED` | The decoder failed after opening the file, produced an unsupported PCM encoding, or decoded no samples. A corrupt file fails with `UNSUPPORTED_FORMAT` or `DECODE_FAILED`, depending on the platform. |
+| `CALCULATION_FAILED` | The native MFCC calculation failed for valid arguments (for example a signal shorter than 1025 samples) or returned an empty or non-finite matrix. The message differs between platforms (Android passes on jlibrosa's exception text). |
 
-### Known limitation: `fftSize` is ignored
+## Known limitations
 
-`fftSize` is validated but currently has no effect on either platform. On Android, jlibrosa 1.1.8's `generateMFCCFeatures` never applies its `n_fft` argument and always uses an FFT size of 2048. iOS computes the MFCCs in the plugin as an exact mirror of jlibrosa's pipeline (only RosaKit's mel filterbank is used), so it uses 2048 too and both platforms return the same values. Consequently every signal needs at least 1025 samples (`2048 / 2 + 1`), otherwise the call fails with `CALCULATION_FAILED`.
+* **`fftSize` is ignored.** jlibrosa 1.1.8's `generateMFCCFeatures` never applies its `n_fft` argument and always uses 2048; iOS does the same so that both platforms return the same values. The argument is still validated.
+* **Minimum 1025 samples.** Centred framing needs `2048 / 2 + 1` samples; shorter signals (or files) fail with `CALCULATION_FAILED`.
+* **Lossy formats can differ in length between platforms.** mp3 and AAC decoders handle encoder delay and padding differently, so the frame count may differ by a few frames between Android and iOS. Not yet verified on an iOS device.
+* **File duration cap of 600 seconds.** Longer files are rejected with `FILE_TOO_LONG`.
+* **Verification status.** The fixed-input check of the example app returns identical values on an Android emulator and an iOS simulator. The file-error cases have not been exercised in-app on iOS yet.
 
-## Example: fixed-input and file checks
+## Example app
 
-The [example app](example/lib/main.dart) has a **Run fixed-input check** button that computes MFCCs of a fixed signal — `0.5 * sin(2π · 1000 · n / 16000)` for 16000 samples (1 s, 1 kHz) with `sampleRate` 16000, `fftSize` 512, `hopLength` 350, `nMels` 40, `mfcc` 40 — and shows the output length, the first five values, their sum and the per-coefficient means over the interior frames (also written to the console with `debugPrint`). Run it on Android and on iOS to compare both platforms by hand: the lengths must match and the values should agree within a small tolerance. **Dump fixed-input values** writes every value of that result to the console on lines starting with `MFCC_DUMP`, for a positional comparison with a script. Further buttons run the same sine as PCM16 and as bundled mp3 / wav / m4a / flac / 44.1 kHz wav files, exercise the error codes (missing file, `content://`, a text file, random bytes, a generated 11-minute wav) and accept an arbitrary path; a progress indicator in the app bar shows the UI stays responsive while a call runs.
+The [example app](https://github.com/tkas9mbek/flutter_sound_processing/tree/master/example) is a manual test bench: a fixed-input check with reference values, a value dump for comparing both platforms, bundled mp3/wav/m4a/flac files, and one button per error code. See its [README](https://github.com/tkas9mbek/flutter_sound_processing/blob/master/example/README.md).
 
 ## Contributing
-Contributions to FlutterSoundProcessing are welcome! If you find a bug or want to add a new feature, please open an issue or submit a pull request on the [GitHub repository](https://github.com/tkas9mbek/flutter_sound_processing).
+
+Contributions are welcome. If you find a bug or want to add a feature, open an issue or a pull request on the [GitHub repository](https://github.com/tkas9mbek/flutter_sound_processing).
 
 ## License
-This project is licensed under the [MIT License](https://github.com/tkas9mbek/flutter_sound_processing/blob/master/LICENSE).
+
+[MIT](https://github.com/tkas9mbek/flutter_sound_processing/blob/master/LICENSE).
