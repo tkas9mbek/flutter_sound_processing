@@ -23,6 +23,10 @@ const int fixtureLength = 16000;
 /// Frames dropped at each end before averaging, so encoder delay/padding does not dominate the means.
 const int edgeFrames = 3;
 
+/// Values per `MFCC_DUMP` console line; keeps lines well under the iOS unified-log (1 KiB) and
+/// Android logcat (4 KiB) truncation limits.
+const int dumpValuesPerLine = 25;
+
 /// Raw channel used only to send arguments that the typed API cannot express.
 const debugChannel = MethodChannel('flutter_sound_processing');
 
@@ -259,6 +263,25 @@ class _MyAppState extends State<MyApp> {
     return diff.toStringAsExponential(3);
   }
 
+  /// Prints every value of [result] at full (round-trip) precision on console lines
+  /// `MFCC_DUMP run=<id> platform=<os> chunk=<i>/<n> offset=<index> total=<length> values=<v v …>`,
+  /// so the dumps of both platforms can be compared positionally by a script.
+  void dumpValues(Float64List result) {
+    final run = DateTime.now().millisecondsSinceEpoch;
+    final chunks = (result.length + dumpValuesPerLine - 1) ~/ dumpValuesPerLine;
+
+    for (var chunk = 0; chunk < chunks; chunk++) {
+      final offset = chunk * dumpValuesPerLine;
+      final end = math.min(offset + dumpValuesPerLine, result.length);
+
+      debugPrint(
+        'MFCC_DUMP run=$run platform=${Platform.operatingSystem} '
+        'chunk=$chunk/$chunks offset=$offset total=${result.length} '
+        'values=${result.sublist(offset, end).join(' ')}',
+      );
+    }
+  }
+
   void report(String line) {
     debugPrint(line);
 
@@ -351,6 +374,28 @@ class _MyAppState extends State<MyApp> {
 
                   return '${summarize(pcm16)} '
                       'maxAbsDiffVsDoubles=${maxAbsDiff(pcm16, doubles)}';
+                }),
+                textCheckButton('Dump fixed-input values', () async {
+                  final result = await calculate(sine(fixtureLength));
+
+                  if (result != null) {
+                    dumpValues(result);
+                  }
+
+                  return summarize(result);
+                }),
+                textCheckButton('mfcc 50 > nMels', () async {
+                  final result = await _flutterSoundProcessingPlugin
+                      .calculateMFCCs(
+                        signals: sine(fixtureLength),
+                        sampleRate: sampleRate,
+                        hopLength: hopLength,
+                        nMels: nMels,
+                        fftSize: fftSize,
+                        mfcc: 50,
+                      );
+
+                  return summarize(result, coefficients: 50);
                 }),
                 checkButton('100 samples', () => calculate(sine(100))),
                 checkButton('Empty signal', () => calculate(const [])),
