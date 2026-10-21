@@ -1,5 +1,5 @@
-group 'kg.cos9.flutter_sound_processing'
-version '1.0'
+group = 'kg.cos9.flutter_sound_processing'
+version = '1.0.0'
 
 buildscript {
     repositories {
@@ -8,11 +8,11 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.0'
+        classpath 'com.android.tools.build:gradle:9.1.0'
     }
 }
 
-rootProject.allprojects {
+allprojects {
     repositories {
         google()
         mavenCentral()
@@ -22,18 +22,23 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdk 31
+    namespace = 'kg.cos9.flutter_sound_processing'
+
+    compileSdk = 36
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     defaultConfig {
-        minSdkVersion 16
+        minSdk = 24
     }
 }
 
 dependencies {
-    implementation files('libs/jlibrosa-1.1.8-SNAPSHOT-jar-with-dependencies.jar')
+    // json-simple 1.1.1 declares junit at compile scope; keep it out of consumers' runtime classpath.
+    implementation('com.litongjava:jlibrosa:1.1.8') {
+        exclude group: 'junit', module: 'junit'
+    }
 }
