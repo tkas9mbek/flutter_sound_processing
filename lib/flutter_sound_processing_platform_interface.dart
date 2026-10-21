@@ -26,8 +26,29 @@ abstract class FlutterSoundProcessingPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<Float64List?> getFeatureMatrix({
+  /// Calculates the MFCC matrix of the mono samples [signals].
+  Future<Float64List?> calculateMFCCs({
     required List<double> signals,
+    required int sampleRate,
+    required int hopLength,
+    required int nMels,
+    required int fftSize,
+    required int mfcc,
+  });
+
+  /// Calculates the MFCC matrix of 16-bit mono PCM [samples].
+  Future<Float64List?> calculateMFCCsFromPcm16({
+    required Int16List samples,
+    required int sampleRate,
+    required int hopLength,
+    required int nMels,
+    required int fftSize,
+    required int mfcc,
+  });
+
+  /// Calculates the MFCC matrix of the audio file at [path], decoded natively.
+  Future<Float64List?> calculateMFCCsFromFile({
+    required String path,
     required int sampleRate,
     required int hopLength,
     required int nMels,

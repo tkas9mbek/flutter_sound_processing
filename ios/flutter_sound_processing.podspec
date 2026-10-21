@@ -15,6 +15,7 @@ Flutter package designed for sound processing and analysis.
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
+  s.frameworks = 'AVFoundation'
   s.dependency 'RosaKit', '~> 0.0.11'
   s.platform = :ios, '15.0'
 
