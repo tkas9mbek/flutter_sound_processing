@@ -7,7 +7,8 @@ public class SwiftFlutterSoundProcessingPlugin: NSObject, FlutterPlugin {
     // Method names, error codes, messages and argument keys mirror
     // android/src/main/java/kg/cos9/flutter_sound_processing/FlutterSoundProcessingPlugin.java
     // (with AudioFileDecoder.java, Resampler.java) and lib/flutter_sound_processing_method_channel.dart —
-    // change all three together.
+    // change all three together. MfccCalculator.swift mirrors jlibrosa's MFCC pipeline (Android's result layout
+    // data[coef + mfcc * frame]).
     private static let calculateMFCCsMethod = "calculateMFCCs"
     private static let calculateMFCCsFromFileMethod = "calculateMFCCsFromFile"
 
@@ -20,6 +21,7 @@ public class SwiftFlutterSoundProcessingPlugin: NSObject, FlutterPlugin {
 
     private static let positiveIntKeys = ["sample_rate", "mfcc", "n_fft", "n_mels", "hop_length"]
     private static let maxDurationSeconds = 600
+    private static let jlibrosaFFTSize = 2048
 
     // Serial queue: decodes and MFCC work run off the main thread, one call at a time (bounds peak memory).
     private let queue = DispatchQueue(label: "kg.cos9.flutter_sound_processing", qos: .userInitiated)
@@ -110,21 +112,18 @@ public class SwiftFlutterSoundProcessingPlugin: NSObject, FlutterPlugin {
         }
     }
 
-    private static func calculate(_ signal: [Double], sampleRate: Int, mfcc: Int, nFFT: Int, nMels: Int,
+    // `nFFT` is validated but not used: jlibrosa 1.1.8's generateMFCCFeatures (JLibrosa.java) never applies its
+    // n_fft argument and always uses 2048, so iOS does the same to return Android's values.
+    private static func calculate(_ signal: [Double], sampleRate: Int, mfcc: Int, nFFT _: Int, nMels: Int,
                                   hopLength: Int) throws -> [Double] {
-        let mfccValues = signal.mfcc(
-            nMFCC: mfcc,
-            nFFT: nFFT,
-            hopLength: hopLength,
-            sampleRate: sampleRate,
-            melsCount: nMels
-        )
+        let melFilter = [Double].createMelFilter(sampleRate: sampleRate, FTTCount: jlibrosaFFTSize, melsCount: nMels)
 
-        guard let firstRow = mfccValues.first, !firstRow.isEmpty else {
-            throw PluginError(code: calculationFailed, message: "empty result", details: nil)
+        do {
+            return try MfccCalculator.calculate(signal, nMFCC: mfcc, nFFT: jlibrosaFFTSize, nMels: nMels,
+                                                hopLength: hopLength, melFilter: melFilter)
+        } catch let failure as MfccCalculator.Failure {
+            throw PluginError(code: calculationFailed, message: failure.reason, details: nil)
         }
-
-        return flatten(mfccValues)
     }
 
     /// Returns why `values` is invalid, or nil if it is valid.
@@ -182,22 +181,6 @@ public class SwiftFlutterSoundProcessingPlugin: NSObject, FlutterPlugin {
         // Copies bytes instead of rebinding, so an unaligned Data buffer is safe.
         _ = values.withUnsafeMutableBytes { typed.data.copyBytes(to: $0) }
         return values
-    }
-
-    // Flattened column-major (data[row + rows * col]) so Android and iOS return the same layout.
-    private static func flatten(_ matrix: [[Double]]) -> [Double] {
-        let matrixLength = matrix.count
-        let matrixWidth = matrix[0].count
-
-        var framePredDaArray = [Double](repeating: 0, count: matrixWidth * matrixLength)
-
-        for i in 0..<matrixLength {
-            for j in 0..<matrixWidth {
-                framePredDaArray[i + matrixLength * j] = matrix[i][j]
-            }
-        }
-
-        return framePredDaArray
     }
 
     private struct PluginError: Error {
