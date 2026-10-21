@@ -69,7 +69,7 @@ Shared parameters (all required, all positive):
 * `sampleRate`: sample rate in Hz — of the samples for `calculateMFCCs` / `calculateMFCCsFromPcm16`, the **target** rate for `calculateMFCCsFromFile`.
 * `hopLength`: number of samples between successive frames.
 * `nMels`: number of mel filters.
-* `fftSize`: FFT window size in samples.
+* `fftSize`: FFT window size in samples. Validated (must be positive) but **currently has no effect on either platform**; both use a fixed 2048, see [Known limitation](#known-limitation-fftsize-is-ignored).
 * `mfcc`: number of MFCC coefficients to calculate.
 
 ### `calculateMFCCs`
@@ -101,7 +101,7 @@ Lossy formats (mp3, AAC) can decode to slightly different lengths on Android and
 
 ### Errors
 
-Failures complete the future with a `PlatformException`; the codes and messages are the same on Android and iOS, and `message` starts with the offending argument. For `calculateMFCCsFromFile` the checks run in the order of the table; arguments are validated before the file is touched.
+Failures complete the future with a `PlatformException`; the codes are the same on Android and iOS, and so are the messages except for `CALCULATION_FAILED`. `message` starts with the offending argument. For `calculateMFCCsFromFile` the checks run in the order of the table; arguments are validated before the file is touched.
 
 | Code | When |
 |---|---|
@@ -110,11 +110,15 @@ Failures complete the future with a `PlatformException`; the codes and messages 
 | `UNSUPPORTED_FORMAT` | The file cannot be opened as audio, has no audio track, or the platform has no decoder for it. `details` carries the platform's description. |
 | `FILE_TOO_LONG` | The file is longer than 600 seconds (checked from the file's metadata before decoding). |
 | `DECODE_FAILED` | The decoder failed after opening the file, produced an unsupported PCM encoding, or decoded no samples. A corrupt file fails with either `UNSUPPORTED_FORMAT` or `DECODE_FAILED`, depending on the platform. |
-| `CALCULATION_FAILED` | The native MFCC library failed for valid arguments (for example a signal too short for `fftSize`) or returned an empty matrix. `message` carries the library's reason. |
+| `CALCULATION_FAILED` | The native MFCC calculation failed for valid arguments (for example a signal shorter than 1025 samples) or returned an empty matrix. `message` carries the reason; it differs between platforms (Android passes on jlibrosa's exception message). |
+
+### Known limitation: `fftSize` is ignored
+
+`fftSize` is validated but currently has no effect on either platform. On Android, jlibrosa 1.1.8's `generateMFCCFeatures` never applies its `n_fft` argument and always uses an FFT size of 2048. iOS computes the MFCCs in the plugin as an exact mirror of jlibrosa's pipeline (only RosaKit's mel filterbank is used), so it uses 2048 too and both platforms return the same values. Consequently every signal needs at least 1025 samples (`2048 / 2 + 1`), otherwise the call fails with `CALCULATION_FAILED`.
 
 ## Example: fixed-input and file checks
 
-The [example app](example/lib/main.dart) has a **Run fixed-input check** button that computes MFCCs of a fixed signal — `0.5 * sin(2π · 1000 · n / 16000)` for 16000 samples (1 s, 1 kHz) with `sampleRate` 16000, `fftSize` 512, `hopLength` 350, `nMels` 40, `mfcc` 40 — and shows the output length, the first five values, their sum and the per-coefficient means over the interior frames (also written to the console with `debugPrint`). Run it on Android and on iOS to compare both platforms by hand: the lengths must match and the values should agree within a small tolerance. Further buttons run the same sine as PCM16 and as bundled mp3 / wav / m4a / flac / 44.1 kHz wav files, exercise the error codes (missing file, `content://`, a text file, random bytes, a generated 11-minute wav) and accept an arbitrary path; a progress indicator in the app bar shows the UI stays responsive while a call runs.
+The [example app](example/lib/main.dart) has a **Run fixed-input check** button that computes MFCCs of a fixed signal — `0.5 * sin(2π · 1000 · n / 16000)` for 16000 samples (1 s, 1 kHz) with `sampleRate` 16000, `fftSize` 512, `hopLength` 350, `nMels` 40, `mfcc` 40 — and shows the output length, the first five values, their sum and the per-coefficient means over the interior frames (also written to the console with `debugPrint`). Run it on Android and on iOS to compare both platforms by hand: the lengths must match and the values should agree within a small tolerance. **Dump fixed-input values** writes every value of that result to the console on lines starting with `MFCC_DUMP`, for a positional comparison with a script. Further buttons run the same sine as PCM16 and as bundled mp3 / wav / m4a / flac / 44.1 kHz wav files, exercise the error codes (missing file, `content://`, a text file, random bytes, a generated 11-minute wav) and accept an arbitrary path; a progress indicator in the app bar shows the UI stays responsive while a call runs.
 
 ## Contributing
 Contributions to FlutterSoundProcessing are welcome! If you find a bug or want to add a new feature, please open an issue or submit a pull request on the [GitHub repository](https://github.com/tkas9mbek/flutter_sound_processing).

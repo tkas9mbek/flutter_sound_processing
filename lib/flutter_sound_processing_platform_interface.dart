@@ -27,6 +27,9 @@ abstract class FlutterSoundProcessingPlatform extends PlatformInterface {
   }
 
   /// Calculates the MFCC matrix of the mono samples [signals].
+  ///
+  /// The bundled Android and iOS implementations validate [fftSize] but currently ignore it: jlibrosa
+  /// uses a fixed FFT size of 2048, and iOS mirrors it.
   Future<Float64List?> calculateMFCCs({
     required List<double> signals,
     required int sampleRate,
@@ -37,6 +40,8 @@ abstract class FlutterSoundProcessingPlatform extends PlatformInterface {
   });
 
   /// Calculates the MFCC matrix of 16-bit mono PCM [samples].
+  ///
+  /// [fftSize] is ignored as in [calculateMFCCs].
   Future<Float64List?> calculateMFCCsFromPcm16({
     required Int16List samples,
     required int sampleRate,
@@ -47,6 +52,8 @@ abstract class FlutterSoundProcessingPlatform extends PlatformInterface {
   });
 
   /// Calculates the MFCC matrix of the audio file at [path], decoded natively.
+  ///
+  /// [fftSize] is ignored as in [calculateMFCCs].
   Future<Float64List?> calculateMFCCsFromFile({
     required String path,
     required int sampleRate,

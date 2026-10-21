@@ -12,10 +12,12 @@ class FlutterSoundProcessing {
   /// Calculates the MFCC matrix of [signals] natively.
   ///
   /// [signals] are raw mono audio samples, nominally in `[-1, 1]`; [sampleRate] is their rate in Hz;
-  /// [hopLength] and [fftSize] are in samples; [nMels] is the number of mel filters; [mfcc] is the
-  /// number of coefficients. Fails with `INVALID_ARGUMENTS` when [signals] is empty or an integer
-  /// parameter is not positive, and `CALCULATION_FAILED` when the native library fails or returns an
-  /// empty matrix (for example a signal too short for [fftSize]).
+  /// [hopLength] is in samples; [nMels] is the number of mel filters; [mfcc] is the number of
+  /// coefficients. [fftSize] (in samples) is validated but currently has no effect on either
+  /// platform: jlibrosa on Android ignores it and uses a fixed 2048, and iOS does the same so both
+  /// return the same values. Fails with `INVALID_ARGUMENTS` when [signals] is empty or an integer
+  /// parameter is not positive, and `CALCULATION_FAILED` when the native calculation fails or returns
+  /// an empty matrix (for example a signal shorter than 1025 samples, half the 2048 FFT plus one).
   Future<Float64List?> calculateMFCCs({
     required List<double> signals,
     required int sampleRate,
